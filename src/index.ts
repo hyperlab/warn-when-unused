@@ -49,6 +49,28 @@ export function createSpy(path = '@', usedKeys = new Set<string>()) {
   return { ...handler, __unused__, __used__ };
 }
 
+export function getUnusedProperties(obj: any, whitelist: string[] = []) {
+  const spy = createSpy('@', new Set(whitelist));
+  const proxy = new Proxy(obj, spy);
+  const getUnused = () => spy.__unused__(obj);
+
+  return [proxy, getUnused];
+}
+
+export function warnWhenUnused(obj: any, whitelist = []) {
+  const [proxy, getUnused] = getUnusedProperties(obj, whitelist)
+
+  setTimeout(() => {
+    const unused = getUnused();
+    if (unused && unused.length) {
+      console.log(`Unused keys:\n${unused.join(', ')}`);
+    }
+  }, 100);
+
+  return proxy;
+}
+
+
 type Timer = ReturnType<typeof setTimeout>;
 
 export function useWarnWhenUnused(obj: any, whitelist = []) {
